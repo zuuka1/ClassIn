@@ -1,0 +1,1178 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>ClassIn - Manajemen Jadwal Kuliah Anti-Pusing</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Premium Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        indigo: {
+                            950: '#0f0e26',
+                            900: '#1d1b4c',
+                            800: '#2c2973',
+                            700: '#3c379a',
+                            600: '#4c46c1',
+                            500: '#6366f1',
+                            100: '#e0e7ff',
+                            50: '#f5f7ff'
+                        },
+                        slate: {
+                            850: '#1e293b',
+                            950: '#0b0f19'
+                        }
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'bounce-slow': 'bounce-slow 2s infinite',
+                        'spin-slow': 'spin-slow 8s linear infinite',
+                        'float-glow': 'float-glow 6s ease-in-out infinite'
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100 min-h-screen relative overflow-x-hidden font-sans w-full max-w-full">
+
+    <!-- Contained Background Glow Layer (To prevent document width expansion) -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+        <div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-indigo-500/10 dark:bg-indigo-500/5 blur-[120px] animate-float-glow-1"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[50vw] h-[50vw] rounded-full bg-amber-500/10 dark:bg-amber-500/5 blur-[120px] animate-float-glow-2"></div>
+    </div>
+
+    <!-- Hidden Input for Avatar Upload -->
+    <input type="file" id="profile-upload-input" accept="image/*" class="hidden">
+
+    <!-- Inner Application Toast Container -->
+    <div id="toast-container" class="fixed top-6 left-1/2 -translate-x-1/2 z-50 w-[92%] max-w-md hidden">
+        <div class="glass-modal p-4 rounded-3xl shadow-2xl flex items-start gap-4 border border-indigo-500/30 dark:border-slate-700/30 transition-all">
+            <div class="bg-indigo-600/20 text-amber-500 p-2.5 rounded-2xl flex items-center justify-center shadow-inner">
+                <i class="fa-solid fa-bell text-xl"></i>
+            </div>
+            <div class="flex-1">
+                <h4 id="toast-title" class="font-bold text-sm tracking-tight text-indigo-950 dark:text-white">🔔 Judul Notifikasi</h4>
+                <p id="toast-body" class="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-relaxed">Detail isi pesan pengingat jadwal kuliah anda di sini.</p>
+            </div>
+            <button onclick="closeToast()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Custom Modal Alerts (No browser prompt) -->
+    <div id="custom-alert" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm hidden">
+        <div class="glass-modal max-w-sm w-full p-6 rounded-3xl shadow-2xl text-center space-y-4 border border-white/20">
+            <div id="alert-icon-wrapper" class="w-14 h-14 bg-indigo-100 dark:bg-indigo-950/50 rounded-2xl flex items-center justify-center text-2xl mx-auto text-indigo-600 dark:text-indigo-400">
+                <i class="fa-solid fa-circle-info"></i>
+            </div>
+            <h4 id="alert-title" class="text-lg font-extrabold text-slate-900 dark:text-white">Informasi</h4>
+            <p id="alert-message" class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">Pesan pemberitahuan khusus</p>
+            <button onclick="closeAlert()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 rounded-xl text-sm transition-colors shadow-lg shadow-indigo-600/20">Tutup</button>
+        </div>
+    </div>
+
+    <!-- Full-screen custom bouncing transition screen -->
+    <div id="screen-loading" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-indigo-950 text-white hidden">
+        <div class="space-y-6 text-center">
+            <!-- New Premium Logo Bounce -->
+            <div class="w-24 h-24 bg-gradient-to-tr from-indigo-700 to-indigo-500 rounded-[30px] flex items-center justify-center shadow-2xl shadow-indigo-500/40 border border-indigo-400/20 mx-auto animate-bounce-slow">
+                <i class="fa-solid fa-graduation-cap text-amber-400 text-5xl"></i>
+            </div>
+            <div class="space-y-2">
+                <h2 class="text-3xl font-black tracking-tight text-white flex items-center justify-center gap-2">Class<span class="text-amber-400">In</span></h2>
+                <p id="loading-typewriter" class="text-sm text-indigo-200 font-semibold tracking-wide h-6">Menghubungkan Akun...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 1. VIEW LANDING PAGE -->
+    <!-- ========================================== -->
+    <div id="view-landing" class="view-section min-h-screen flex flex-col justify-between relative z-10 w-full max-w-full">
+        <!-- Navigation Header -->
+        <header class="w-full bg-white/80 dark:bg-slate-950/80 backdrop-blur-md sticky top-0 z-40 border-b border-slate-100 dark:border-slate-900 transition-colors">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+                <!-- Premium Logo -->
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 bg-indigo-950 dark:bg-slate-900 rounded-2xl flex items-center justify-center shadow-lg shadow-indigo-600/30 border border-indigo-500/20">
+                        <i class="fa-solid fa-graduation-cap text-amber-400 text-xl animate-bounce-slow"></i>
+                    </div>
+                    <span class="text-2xl font-black text-indigo-950 dark:text-white tracking-tight">Class<span class="text-indigo-600 dark:text-amber-400">In</span></span>
+                </div>
+                <nav class="hidden md:flex items-center gap-8 font-semibold text-slate-600 dark:text-slate-300 text-sm">
+                    <a href="#landing-features" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-i18n="menuFeatures">Fitur</a>
+                    <a href="#landing-testi" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-i18n="menuTestimonials">Testimoni</a>
+                    <a href="#landing-about" class="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors" data-i18n="menuAbout">Tentang Kami</a>
+                </nav>
+                <div class="flex items-center gap-4">
+                    <button onclick="navigateTo('view-onboarding')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-6 rounded-2xl shadow-lg shadow-indigo-600/20 transition-all duration-300 transform hover:-translate-y-0.5 text-sm" data-i18n="btnOpenApp">
+                        Buka Aplikasi
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Hero Section -->
+        <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 lg:py-24 flex flex-col lg:flex-row items-center gap-12 flex-1 w-full">
+            <div class="w-full lg:w-1/2 space-y-6 text-center lg:text-left">
+                <span class="inline-flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 font-bold text-xs px-3.5 py-1.5 rounded-full">
+                    🚀 <span data-i18n="appVersion">Versi 3.0 Web Premium App</span>
+                </span>
+                <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight leading-tight text-slate-900 dark:text-white">
+                    <span data-i18n="sloganPart1">Manajemen Jadwal Kuliah</span> <span class="text-indigo-600 dark:text-amber-400" data-i18n="sloganPart2">Anti-Pusing</span>
+                </h1>
+                <p class="text-slate-500 dark:text-slate-400 text-base sm:text-lg max-w-xl mx-auto lg:mx-0" data-i18n="appDesc">
+                    Aplikasi asisten jadwal perkuliahan terintegrasi, pemetaan ruang kelas kampus, dan pengingat cerdas otomatis berbasis SPA untuk produktivitas maksimal mahasiswa.
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
+                    <button onclick="navigateTo('view-onboarding')" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 px-8 rounded-2xl shadow-xl shadow-indigo-600/25 flex items-center justify-center gap-3 transition-all transform hover:-translate-y-1">
+                        <i class="fa-solid fa-play"></i> <span data-i18n="btnStartTrial">Mulai Uji Coba Gratis</span>
+                    </button>
+                    <div class="flex gap-2 justify-center items-center text-slate-500 dark:text-slate-400 text-xs sm:text-sm font-semibold">
+                        <i class="fa-solid fa-cloud"></i> <span data-i18n="noInstall">Tanpa Instalasi Perangkat Keras</span>
+                    </div>
+                </div>
+            </div>
+            <!-- Mockup App Image -->
+            <div class="w-full lg:w-1/2 flex justify-center relative">
+                <div class="absolute -inset-4 bg-indigo-500/10 rounded-full blur-3xl -z-10"></div>
+                <div class="w-[280px] sm:w-[320px] aspect-[9/19] bg-slate-950 rounded-[40px] p-3 shadow-2xl border-4 border-slate-800 relative overflow-hidden flex flex-col justify-between">
+                    <div class="w-32 h-4 bg-slate-800 rounded-full mx-auto mb-2"></div>
+                    <div class="bg-slate-900 flex-1 rounded-[30px] p-4 flex flex-col justify-between border border-slate-800">
+                        <div class="flex items-center justify-between">
+                            <span class="text-[10px] font-bold text-indigo-400">ClassIn Dashboard</span>
+                            <div class="w-2 h-2 rounded-full bg-emerald-500"></div>
+                        </div>
+                        <div class="space-y-3 my-auto">
+                            <div class="bg-indigo-950 p-3 rounded-xl border border-indigo-900/50">
+                                <span class="text-[8px] bg-amber-400 text-indigo-950 px-1.5 py-0.5 rounded-full font-bold">Dimulai 15 Menit</span>
+                                <h4 class="text-xs font-bold text-white mt-1">Pemrograman Web</h4>
+                                <p class="text-[9px] text-slate-400"><i class="fa-solid fa-location-dot text-red-400"></i> Gedung A, Ruang 301</p>
+                            </div>
+                            <div class="bg-slate-800/50 p-3 rounded-xl">
+                                <h4 class="text-xs font-bold text-slate-300">Kecerdasan Buatan</h4>
+                                <p class="text-[9px] text-slate-500"><i class="fa-solid fa-video text-blue-400"></i> Link Zoom Kelas</p>
+                            </div>
+                        </div>
+                        <div class="flex justify-between text-[10px] text-slate-500 pt-2 border-t border-slate-800">
+                            <span>🏠 Home</span>
+                            <span>📅 Schedule</span>
+                            <span>⚙️ Profile</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="landing-features" class="bg-white dark:bg-slate-950/40 py-20 border-t border-b border-slate-100 dark:border-slate-900 transition-colors w-full">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="text-center max-w-2xl mx-auto space-y-3 mb-16">
+                    <h2 class="text-3xl font-black text-slate-900 dark:text-white" data-i18n="featuresTitle">Mengapa Memilih ClassIn?</h2>
+                    <p class="text-slate-500 dark:text-slate-400" data-i18n="featuresDesc">Dirancang khusus untuk melancarkan mobilitas harian para mahasiswa agar bebas dari kendala terlambat kelas.</p>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Feature Card 1 -->
+                    <div class="p-8 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 space-y-4 hover:shadow-xl transition-all">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-bold">
+                            <i class="fa-solid fa-map-location-dot"></i>
+                        </div>
+                        <h3 class="text-xl font-bold" data-i18n="f1Title">Antisipasi Salah Kelas</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed" data-i18n="f1Desc">
+                            Panduan navigasi lokasi kelas internal kampus berupa visualisasi letak gedung, lantai, dan nomor ruangan lengkap secara luring.
+                        </p>
+                    </div>
+                    <!-- Feature Card 2 -->
+                    <div class="p-8 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 space-y-4 hover:shadow-xl transition-all">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-bold">
+                            <i class="fa-solid fa-bell"></i>
+                        </div>
+                        <h3 class="text-xl font-bold" data-i18n="f2Title">Notifikasi Pengingat</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed" data-i18n="f2Desc">
+                            Web push notification otomatis 15 menit sebelum kuliah dimulai untuk memastikan Anda bersiap-siap menuju ruang kelas berikutnya.
+                        </p>
+                    </div>
+                    <!-- Feature Card 3 -->
+                    <div class="p-8 rounded-3xl bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 space-y-4 hover:shadow-xl transition-all">
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-100 dark:bg-indigo-950/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 text-xl font-bold">
+                            <i class="fa-solid fa-globe"></i>
+                        </div>
+                        <h3 class="text-xl font-bold" data-i18n="f3Title">Akses Cepat Zoom</h3>
+                        <p class="text-slate-500 dark:text-slate-400 text-sm leading-relaxed" data-i18n="f3Desc">
+                            Integrasi tombol instan untuk langsung meluncur ke konferensi virtual bagi mata kuliah yang diadakan secara daring/hibrida.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="landing-testi" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div class="text-center max-w-2xl mx-auto space-y-3 mb-12">
+                <h2 class="text-3xl font-black text-slate-900 dark:text-white" data-i18n="testiTitle">Suara Mahasiswa</h2>
+                <p class="text-slate-500 dark:text-slate-400" data-i18n="testiDesc">Dengar langsung pengalaman tulus dari mereka yang menggunakan ClassIn.</p>
+            </div>
+            
+            <!-- Horizontal Scrollable Testimonials with Dot Indicator Control -->
+            <div class="relative w-full max-w-4xl mx-auto overflow-hidden">
+                <div id="testi-carousel" class="flex overflow-x-auto snap-x snap-mandatory scroll-smooth hide-scrollbar gap-6 pb-6">
+                    <!-- Card 1 -->
+                    <div class="w-full shrink-0 snap-center p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 space-y-4 relative shadow-sm">
+                        <i class="fa-solid fa-quote-left text-indigo-200 dark:text-indigo-900/40 text-4xl absolute top-6 right-8"></i>
+                        <p class="text-slate-600 dark:text-slate-300 italic text-sm sm:text-base leading-relaxed relative z-10" data-i18n="testi1">
+                            "Aplikasi ini menyelamatkan saya dari drama salah masuk kelas! Sebelum memakai ClassIn, saya sering lupa jadwal kelas luring karena jadwal yang sering bergeser."
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">I</div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-900 dark:text-white">Ian</h4>
+                                <p class="text-xs text-slate-400" data-i18n="studentMajor">Teknik Informatika</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 2 -->
+                    <div class="w-full shrink-0 snap-center p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 space-y-4 relative shadow-sm">
+                        <i class="fa-solid fa-quote-left text-indigo-200 dark:text-indigo-900/40 text-4xl absolute top-6 right-8"></i>
+                        <p class="text-slate-600 dark:text-slate-300 italic text-sm sm:text-base leading-relaxed relative z-10" data-i18n="testi2">
+                            "Notifikasi otomatisnya beneran membantu. Muncul langsung di HP saya tepat 15 menit sebelum jam kuliah dimulai. Dosen penguji juga sangat memuji rancangan aplikasinya!"
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">V</div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-900 dark:text-white">Vierdha Jastien</h4>
+                                <p class="text-xs text-slate-400" data-i18n="studentMajor">Teknik Informatika</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 3 -->
+                    <div class="w-full shrink-0 snap-center p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 space-y-4 relative shadow-sm">
+                        <i class="fa-solid fa-quote-left text-indigo-200 dark:text-indigo-900/40 text-4xl absolute top-6 right-8"></i>
+                        <p class="text-slate-600 dark:text-slate-300 italic text-sm sm:text-base leading-relaxed relative z-10">
+                            "Integrasi ke Google Calendar membuat produktivitas saya meningkat drastis. Desain aplikasinya super bersih, minimalis, dan sangat bersahabat di malam hari!"
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">R</div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-900 dark:text-white">Rizky Amanda</h4>
+                                <p class="text-xs text-slate-400">Sistem Informasi</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Card 4 -->
+                    <div class="w-full shrink-0 snap-center p-8 rounded-3xl bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800/80 space-y-4 relative shadow-sm">
+                        <i class="fa-solid fa-quote-left text-indigo-200 dark:text-indigo-900/40 text-4xl absolute top-6 right-8"></i>
+                        <p class="text-slate-600 dark:text-slate-300 italic text-sm sm:text-base leading-relaxed relative z-10">
+                            "Membantu saya menemukan ruang laboratorium kosong untuk nugas kelompok. Ditambah, loading transisi aplikasinya sangat cerdas dan modern!"
+                        </p>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-full bg-indigo-600 flex items-center justify-center text-white font-bold">D</div>
+                            <div>
+                                <h4 class="font-bold text-sm text-slate-900 dark:text-white">Denny S.</h4>
+                                <p class="text-xs text-slate-400">Teknik Elektro</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Carousel Dot Navigation -->
+                <div class="flex justify-center gap-2 mt-4">
+                    <button onclick="slideTesti(0)" class="testi-dot w-3 h-3 rounded-full bg-indigo-600 transition-colors"></button>
+                    <button onclick="slideTesti(1)" class="testi-dot w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700 transition-colors"></button>
+                    <button onclick="slideTesti(2)" class="testi-dot w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700 transition-colors"></button>
+                    <button onclick="slideTesti(3)" class="testi-dot w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-700 transition-colors"></button>
+                </div>
+            </div>
+        </section>
+
+        <section id="landing-about" class="bg-indigo-950 text-white py-20 border-t border-indigo-900 relative overflow-hidden w-full">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
+                    <div class="space-y-6">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center text-amber-400 font-bold">
+                                <i class="fa-solid fa-graduation-cap"></i>
+                            </div>
+                            <span class="text-xl font-bold tracking-tight text-amber-400">ClassIn Foundation</span>
+                        </div>
+                        <h2 class="text-3xl font-extrabold text-white" data-i18n="aboutTitle">Misi Kami Membantu Akademis Mahasiswa</h2>
+                        <p class="text-indigo-200 text-sm leading-relaxed" data-i18n="aboutP1">
+                            ClassIn didirikan atas kepedulian mendalam terhadap tingginya tingkat keterlambatan dan salah kelas yang dihadapi mahasiswa akibat kompleksnya jadwal perkuliahan dinamis di kampus. Kami membangun arsitektur aplikasi berbasis Single Page Application (SPA) yang sangat cepat, andal, dan ramah aksesibilitas.
+                        </p>
+                        <p class="text-indigo-200 text-sm leading-relaxed" data-i18n="aboutP2">
+                            Aplikasi ini terintegrasi penuh untuk memberikan kenyamanan navigasi digital, pengaturan alarm otomatis cerdas, serta pembagian jadwal perkuliahan secara efisien guna mendukung transisi digitalisasi kampus yang terpadu.
+                        </p>
+                        <div class="p-5 rounded-2xl bg-indigo-900/30 border border-indigo-500/20 text-indigo-200 text-xs leading-relaxed space-y-2">
+                            <h4 class="font-bold text-amber-400"><i class="fa-solid fa-diagram-project"></i> Integrasi & Kolaborasi Developer</h4>
+                            <p>Aplikasi ClassIn dirancang agar dapat di-kolaborasikan dengan mudah oleh pengembang kampus ataupun sekolah Anda. Data dapat disinkronkan secara otomatis menggunakan API internal kampus, meliputi pencocokan NIM otomatis, pemutakhiran biodata profil, pencarian nama dosen, hingga status persidangan akademik.</p>
+                        </div>
+                    </div>
+                    <div class="p-8 rounded-3xl bg-indigo-900/50 border border-indigo-800/60 backdrop-blur space-y-6">
+                        <h3 class="text-lg font-bold text-amber-400" data-i18n="sponsorHeader">Kolaborator & Didukung Oleh</h3>
+                        <p class="text-xs text-indigo-300 leading-relaxed" data-i18n="sponsorSub">Integrasi teknologi mutakhir serta tools pengembangan profesional yang mendukung stabilitas sistem ClassIn:</p>
+                        
+                        <!-- Collab & Sponsor Badges Grid -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                            <div class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-800 flex items-center gap-2 text-[11px] font-bold text-slate-300 hover:text-white transition-colors">
+                                <i class="fa-solid fa-robot text-indigo-400"></i> AI Gemini
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-800 flex items-center gap-2 text-[11px] font-bold text-slate-300 hover:text-white transition-colors">
+                                <i class="fa-solid fa-microchip text-indigo-400"></i> Claude AI
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-800 flex items-center gap-2 text-[11px] font-bold text-slate-300 hover:text-white transition-colors">
+                                <i class="fa-solid fa-code text-indigo-400"></i> VS Code
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-800 flex items-center gap-2 text-[11px] font-bold text-slate-300 hover:text-white transition-colors">
+                                <i class="fa-solid fa-compass-drafting text-indigo-400"></i> Figma
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-800 flex items-center gap-2 text-[11px] font-bold text-slate-300 hover:text-white transition-colors">
+                                <i class="fa-brands fa-laravel text-red-400"></i> Laravel
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-800 flex items-center gap-2 text-[11px] font-bold text-slate-300 hover:text-white transition-colors">
+                                <i class="fa-solid fa-fire text-amber-500"></i> Firebase
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-800 flex items-center gap-2 text-[11px] font-bold text-slate-300 hover:text-white transition-colors">
+                                <i class="fa-solid fa-magnifying-glass text-indigo-400"></i> Magnify
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-800 flex items-center gap-2 text-[11px] font-bold text-slate-300 hover:text-white transition-colors">
+                                <i class="fa-solid fa-weight-hanging text-indigo-400"></i> Antigravity
+                            </div>
+                            <div class="p-2.5 rounded-xl bg-indigo-950/60 border border-indigo-800 flex items-center gap-2 text-[11px] font-bold text-slate-300 hover:text-white transition-colors">
+                                <i class="fa-solid fa-brain text-indigo-400"></i> Opus AI
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-indigo-800 flex justify-between items-center text-xs text-indigo-300">
+                            <span>Maintained by: <strong>Jastien</strong></span>
+                            <span class="text-[10px] bg-indigo-800 px-2 py-0.5 rounded text-indigo-200">Official Partner</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="w-full bg-indigo-950 border-t border-indigo-900/60 py-8 transition-colors text-slate-400 text-xs mt-auto">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div class="flex items-center gap-2">
+                    <div class="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center text-amber-400 font-bold text-sm">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <span class="font-bold text-white text-base">ClassIn</span>
+                </div>
+                <div class="flex gap-6">
+                    <a href="#" class="hover:text-indigo-400 transition-colors">Terms of Service</a>
+                    <a href="#" class="hover:text-indigo-400 transition-colors">Privacy Policy</a>
+                    <a href="mailto:support@classin.student.com" class="hover:text-indigo-400 transition-colors">Kontak Bantuan</a>
+                </div>
+                <p>&copy; 2026 ClassIn App. All rights reserved.</p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 2. VIEW ONBOARDING SLIDES -->
+    <!-- ========================================== -->
+    <div id="view-onboarding" class="view-section min-h-screen hidden flex items-center justify-center bg-slate-50 dark:bg-slate-950 p-4 transition-colors w-full">
+        <div class="w-full max-w-lg bg-white dark:bg-slate-900 rounded-3xl p-6 sm:p-8 shadow-2xl border border-slate-100 dark:border-slate-800 flex flex-col justify-between aspect-[3/4] sm:aspect-auto">
+            <!-- Slide Progress Indicators -->
+            <div class="flex gap-2 justify-center mb-6">
+                <div class="onboard-dot w-8 h-2 rounded-full bg-indigo-600 transition-all duration-300"></div>
+                <div class="onboard-dot w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700 transition-all duration-300"></div>
+                <div class="onboard-dot w-2 h-2 rounded-full bg-slate-200 dark:bg-slate-700 transition-all duration-300"></div>
+            </div>
+
+            <!-- Onboarding Content -->
+            <div id="onboard-container" class="text-center space-y-6 flex-1 flex flex-col justify-center">
+                <!-- Loaded via Javascript -->
+            </div>
+
+            <!-- Footer Action Buttons -->
+            <div class="flex items-center justify-between pt-8 border-t border-slate-100 dark:border-slate-800">
+                <button onclick="skipOnboarding()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white font-bold transition-colors" data-i18n="btnSkip">
+                    Lewati
+                </button>
+                <button onclick="nextOnboardingSlide()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-8 rounded-xl shadow-lg shadow-indigo-600/20 transition-all flex items-center gap-2">
+                    <span id="onboard-btn-text" data-i18n="btnNext">Lanjut</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 3. VIEW LOGIN & REGISTER (SPLIT SCREEN) -->
+    <!-- ========================================== -->
+    <div id="view-auth" class="view-section min-h-screen hidden flex items-center justify-center bg-slate-100 dark:bg-slate-950 p-4 transition-colors w-full">
+        <div class="w-full max-w-5xl bg-white dark:bg-slate-900 rounded-3xl overflow-hidden shadow-2xl flex flex-col md:flex-row border border-slate-100 dark:border-slate-800 transition-colors">
+            
+            <!-- Left Column: Visual Hero Area -->
+            <div class="w-full md:w-1/2 bg-indigo-950 relative min-h-[250px] md:min-h-[600px] flex flex-col justify-between p-8 text-white overflow-hidden">
+                <img src="https://images.unsplash.com/photo-1523050854058-8df90110c9f1?q=80&w=1000" alt="Campus Activity" class="absolute inset-0 w-full h-full object-cover opacity-35 mix-blend-overlay">
+                <div class="absolute inset-0 bg-gradient-to-t from-indigo-950 via-indigo-900/60 to-transparent"></div>
+                
+                <div class="relative z-10 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 bg-amber-400 rounded-lg flex items-center justify-center text-indigo-950 font-bold">
+                            <i class="fa-solid fa-graduation-cap"></i>
+                        </div>
+                        <span class="font-bold text-lg tracking-wide">ClassIn</span>
+                    </div>
+                    <button onclick="navigateTo('view-landing')" class="text-xs bg-white/10 hover:bg-white/20 backdrop-blur-sm py-1.5 px-4 rounded-xl border border-white/15 transition-all flex items-center gap-2">
+                        <i class="fa-solid fa-arrow-left text-xs"></i> <span data-i18n="backToWeb">Kembali ke Website</span>
+                    </button>
+                </div>
+
+                <div class="relative z-10 mt-auto pt-16">
+                    <h2 class="text-3xl sm:text-4xl font-black leading-tight tracking-tight text-glow" data-i18n="heroSlogan">Manajemen Jadwal<br>Kuliah Anti-Pusing</h2>
+                    <p class="text-indigo-200 text-sm mt-2 font-medium" data-i18n="heroSubSlogan">Asisten cerdas perencana hari-hari perkuliahan Anda.</p>
+                </div>
+            </div>
+
+            <!-- Right Column: Authentication form -->
+            <div class="w-full md:w-1/2 bg-slate-900 text-white p-8 sm:p-12 flex flex-col justify-center border-l border-slate-800">
+                <div class="max-w-md mx-auto w-full space-y-6">
+                    <div>
+                        <h2 id="auth-title" class="text-2xl sm:text-3xl font-extrabold tracking-tight" data-i18n="loginTitle">Selamat Datang di ClassIn</h2>
+                        <p id="auth-subtitle" class="text-slate-400 text-xs sm:text-sm mt-1" data-i18n="loginSubtitle">Gunakan kredensial mahasiswa anda untuk masuk ke dasbor.</p>
+                    </div>
+
+                    <!-- Authentication Form -->
+                    <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                        <!-- Dynamic Registration Fields -->
+                        <div id="register-fields" class="space-y-4 hidden animate-fade-in">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblFullName">Nama Lengkap</label>
+                                <input type="text" id="auth-fullname" placeholder="Vierdha Jastien Prihandha" class="w-full bg-slate-800 border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblNim">Nomor Induk Mahasiswa (NIM)</label>
+                                <input type="text" id="auth-nim" placeholder="1124160057" class="w-full bg-slate-800 border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblEmail">Email Mahasiswa</label>
+                            <input required type="email" id="auth-email" placeholder="nama@student.com" class="w-full bg-slate-800 border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblPassword">Kata Sandi</label>
+                            <div class="relative">
+                                <input required type="password" id="auth-password" placeholder="••••••••" class="w-full bg-slate-800 border border-slate-700/60 rounded-xl px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all text-sm">
+                                <button type="button" onclick="togglePasswordVisibility()" class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                                    <i id="password-toggle-icon" class="fa-solid fa-eye text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-6 rounded-xl shadow-lg transition-colors text-sm flex items-center justify-center gap-2">
+                            <span id="auth-submit-text" data-i18n="btnSubmitLogin">Masuk ke Dashboard</span> <i class="fa-solid fa-right-to-bracket text-xs"></i>
+                        </button>
+                    </form>
+
+                    <!-- Option Create Account Switcher -->
+                    <div class="text-center text-sm text-slate-400">
+                        <span id="auth-toggle-desc" data-i18n="noAccountText">Belum punya akun?</span>
+                        <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-indigo-400 hover:text-indigo-300 font-bold underline ml-1" data-i18n="registerNowLink">Daftar Sekarang</button>
+                    </div>
+
+                    <div class="relative flex py-2 items-center">
+                        <div class="flex-grow border-t border-slate-800"></div>
+                        <span class="flex-shrink mx-4 text-slate-500 text-[10px] uppercase font-bold tracking-widest" data-i18n="orLoginWith">Atau masuk dengan</span>
+                        <div class="flex-grow border-t border-slate-800"></div>
+                    </div>
+
+                    <!-- Real Google Color SVG Button -->
+                    <button onclick="simulateGoogleSignIn()" class="w-full bg-slate-850 hover:bg-slate-850/80 text-white border border-slate-700/70 font-semibold py-3 px-6 rounded-xl transition-all flex items-center justify-center gap-3 text-sm">
+                        <svg class="w-5 h-5 shrink-0" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                            <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                            <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                            <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        <span data-i18n="btnLoginGoogle">Masuk dengan Google</span>
+                    </button>
+
+                    <!-- Terms Link Trigger popup -->
+                    <p class="text-center text-[11px] text-slate-500 leading-relaxed">
+                        <span data-i18n="termsPart1">Dengan masuk, Anda menyetujui</span> <button onclick="openTermsModal()" class="text-slate-400 underline hover:text-white" data-i18n="termsPart2">Syarat & Ketentuan</button> <span data-i18n="termsPart3">kami.</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 4. SKELETON LOADING VIEW (2s simulated) -->
+    <!-- ========================================== -->
+    <div id="view-skeleton" class="view-section min-h-screen hidden flex flex-col justify-between bg-slate-50 dark:bg-slate-900 transition-colors p-4 md:p-8 w-full max-w-full">
+        <!-- Topbar Skeleton -->
+        <header class="w-full flex items-center justify-between pb-6 border-b border-slate-200 dark:border-slate-800">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse-slow"></div>
+                <div class="space-y-2">
+                    <div class="w-36 h-4 rounded-md bg-slate-200 dark:bg-slate-800 animate-pulse-slow"></div>
+                    <div class="w-48 h-3 rounded-md bg-slate-200 dark:bg-slate-800 animate-pulse-slow"></div>
+                </div>
+            </div>
+            <div class="w-12 h-12 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse-slow"></div>
+        </header>
+
+        <!-- Body Content Skeleton -->
+        <div class="max-w-5xl w-full mx-auto space-y-8 flex-1 py-8">
+            <div class="w-full h-44 rounded-3xl bg-slate-200 dark:bg-slate-800 animate-pulse-slow"></div>
+            <div class="grid grid-cols-2 gap-4">
+                <div class="h-16 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse-slow"></div>
+                <div class="h-16 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse-slow"></div>
+            </div>
+            <div class="flex gap-3 overflow-hidden">
+                <div class="w-20 h-10 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse-slow shrink-0"></div>
+                <div class="w-20 h-10 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse-slow shrink-0"></div>
+                <div class="w-20 h-10 rounded-full bg-slate-200 dark:bg-slate-800 animate-pulse-slow shrink-0"></div>
+            </div>
+            <div class="space-y-4">
+                <div class="w-full h-24 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse-slow"></div>
+                <div class="w-full h-24 rounded-2xl bg-slate-200 dark:bg-slate-800 animate-pulse-slow"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 5. VIEW DASHBOARD UTAMA -->
+    <!-- ========================================== -->
+    <div id="view-dashboard" class="view-section min-h-screen hidden flex flex-col justify-between w-full max-w-full">
+        
+        <!-- Navigation Header / Topbar -->
+        <header class="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 transition-colors">
+            <div class="max-w-7xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <!-- New App Logo -->
+                    <div class="hidden md:flex w-10 h-10 bg-indigo-600 rounded-xl items-center justify-center shadow-lg shadow-indigo-600/30 text-amber-400 font-bold">
+                        <i class="fa-solid fa-graduation-cap"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-base sm:text-lg font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-1.5">
+                            <span data-i18n="greetingHello">Halo</span>, <span id="dash-greeting-name" class="text-indigo-600 dark:text-amber-400">Vierdha!</span> <span class="animate-wave">👋</span>
+                        </h2>
+                        <p class="text-[10px] sm:text-xs text-slate-500 dark:text-slate-400 leading-none mt-1">
+                            NIM: <span id="dash-info-nim">1124160057</span> • <strong id="dash-info-prog">Teknik Informatika</strong> • <span id="dash-info-univ">ITB Bina Sarana Global</span> • <span id="dash-info-sem" class="font-semibold text-indigo-600 dark:text-indigo-400">Sem. Genap (Aktif)</span>
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Navigation links desktop -->
+                <div class="hidden md:flex items-center gap-6 text-sm font-semibold text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                    <button onclick="navigateTo('view-dashboard')" class="text-indigo-600 dark:text-amber-400" data-i18n="menuHome">Beranda</button>
+                    <button onclick="openCrudModal()" class="hover:text-indigo-600 dark:hover:text-amber-400" data-i18n="menuAdd">Tambah Jadwal</button>
+                    <button onclick="navigateTo('view-profile')" class="hover:text-indigo-600 dark:hover:text-amber-400" data-i18n="menuProfile">Pengaturan Profil</button>
+                </div>
+
+                <div class="flex items-center gap-8">
+                    <div class="hidden lg:flex flex-col items-end text-xs text-slate-400 font-semibold">
+                        <span id="dash-current-date" class="text-slate-600 dark:text-slate-300 font-bold">Jumat, 3 Juli 2026</span>
+                    </div>
+                    <button onclick="navigateTo('view-profile')" class="relative focus:outline-none hover:scale-105 transition-all">
+                        <img id="avatar-img-dashboard" src="https://ui-avatars.com/api/?name=Vierdha+Jastien&background=4f46e5&color=fff&size=150" alt="Profile" class="w-11 h-11 rounded-full border-2 border-indigo-500 object-cover">
+                        <span class="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full"></span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Dashboard Content -->
+        <main class="max-w-5xl w-full mx-auto px-4 md:px-6 py-6 space-y-6 flex-1">
+            <!-- Highlight Next Class Container -->
+            <div id="highlight-card-container">
+                <!-- Loaded dynamically -->
+            </div>
+
+            <!-- Booked Rooms Section -->
+            <div class="space-y-4">
+                <h3 class="font-extrabold text-base text-slate-900 dark:text-white">Ruangan Terisi (Peminjaman)</h3>
+                <div id="booked-rooms-list" class="space-y-4">
+                    <!-- Loaded dynamically -->
+                </div>
+            </div>
+
+            <!-- Quick Action Buttons Grid -->
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="openCrudModal()" class="flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-indigo-500 transition-all text-left">
+                    <div class="space-y-0.5">
+                        <h4 class="font-bold text-sm text-slate-900 dark:text-white" data-i18n="actionAddTitle">Tambah Jadwal</h4>
+                        <p class="text-[10px] text-slate-400" data-i18n="actionAddSub">Sisipkan agenda kelas baru</p>
+                    </div>
+                    <div class="w-10 h-10 bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 rounded-xl flex items-center justify-center">
+                        <i class="fa-solid fa-plus text-base"></i>
+                    </div>
+                </button>
+                <button onclick="openEmptyRoomModal()" class="flex items-center justify-between p-4 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/80 shadow-sm hover:shadow-md hover:border-amber-500 transition-all text-left">
+                    <div class="space-y-0.5">
+                        <h4 class="font-bold text-sm text-slate-900 dark:text-white" data-i18n="actionRoomTitle">Cek Ruang Kosong</h4>
+                        <p class="text-[10px] text-slate-400" data-i18n="actionRoomSub">Simulasi audit lokasi nugas</p>
+                    </div>
+                    <div class="w-10 h-10 bg-amber-50 dark:bg-amber-950/20 text-amber-500 rounded-xl flex items-center justify-center">
+                        <i class="fa-solid fa-building-circle-check text-base"></i>
+                    </div>
+                </button>
+            </div>
+
+            <!-- Horizontal Scroll Filter Bar -->
+            <div class="space-y-2.5">
+                <h3 class="font-bold text-sm text-slate-400 uppercase tracking-wider" data-i18n="filterDayTitle">Navigasi Filter Hari</h3>
+                <div class="flex overflow-x-auto gap-2 pb-2 hide-scrollbar">
+                    <button onclick="setFilterDay('Semua')" class="filter-btn shrink-0 px-5 py-2.5 rounded-full text-xs font-extrabold tracking-wide transition-all bg-indigo-600 text-white shadow-lg shadow-indigo-600/15" data-i18n="btnAll">
+                        Semua
+                    </button>
+                    <button onclick="setFilterDay('Senin')" class="filter-btn shrink-0 px-5 py-2.5 rounded-full text-xs font-extrabold tracking-wide transition-all bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 text-slate-500">
+                        Senin
+                    </button>
+                    <button onclick="setFilterDay('Selasa')" class="filter-btn shrink-0 px-5 py-2.5 rounded-full text-xs font-extrabold tracking-wide transition-all bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 text-slate-500">
+                        Selasa
+                    </button>
+                    <button onclick="setFilterDay('Rabu')" class="filter-btn shrink-0 px-5 py-2.5 rounded-full text-xs font-extrabold tracking-wide transition-all bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 text-slate-500">
+                        Rabu
+                    </button>
+                    <button onclick="setFilterDay('Kamis')" class="filter-btn shrink-0 px-5 py-2.5 rounded-full text-xs font-extrabold tracking-wide transition-all bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 text-slate-500">
+                        Kamis
+                    </button>
+                    <button onclick="setFilterDay('Jumat')" class="filter-btn shrink-0 px-5 py-2.5 rounded-full text-xs font-extrabold tracking-wide transition-all bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 text-slate-500">
+                        Jumat
+                    </button>
+                    <button onclick="setFilterDay('Sabtu')" class="filter-btn shrink-0 px-5 py-2.5 rounded-full text-xs font-extrabold tracking-wide transition-all bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/60 text-slate-500">
+                        Sabtu
+                    </button>
+                </div>
+            </div>
+
+            <!-- Schedule Card Lists Grid -->
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-extrabold text-base text-slate-900 dark:text-white" data-i18n="scheduleListHeader">Daftar Jadwal Kuliah</h3>
+                    <span id="active-day-badge" class="text-xs font-bold text-indigo-600 bg-indigo-50 dark:bg-indigo-950 dark:text-indigo-400 py-1 px-3 rounded-full">Hari Ini</span>
+                </div>
+
+                <div id="schedule-cards-list" class="space-y-4">
+                    <!-- Cards populated via JavaScript renderSchedules() -->
+                </div>
+            </div>
+            
+            <div class="h-24"></div> <!-- Padding to prevent floating bar overlapping content -->
+        </main>
+
+        <!-- Floating Action Button Mobile -->
+        <button onclick="openCrudModal()" class="md:hidden fixed bottom-20 right-6 w-14 h-14 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full shadow-2xl flex items-center justify-center text-xl z-40 focus:outline-none transition-transform hover:scale-105 active:scale-95">
+            <i class="fa-solid fa-plus"></i>
+        </button>
+
+        <!-- Bottom Navigation Mobile (Fixed securely at the bottom edge) -->
+        <footer class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 transition-colors py-3 px-6 flex items-center justify-around text-slate-400 shadow-xl">
+            <button onclick="navigateTo('view-dashboard')" class="flex flex-col items-center gap-1 text-indigo-600 dark:text-indigo-400 focus:outline-none">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[9px] font-bold" data-i18n="navHome">Beranda</span>
+            </button>
+            <button onclick="navigateTo('view-calendar')" class="flex flex-col items-center gap-1 hover:text-slate-600 focus:outline-none">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+                <span class="text-[9px] font-bold" data-i18n="navCalendar">Kalender</span>
+            </button>
+            <button onclick="navigateTo('view-profile')" class="flex flex-col items-center gap-1 hover:text-slate-600 focus:outline-none">
+                <i class="fa-solid fa-gear text-lg"></i>
+                <span class="text-[9px] font-bold" data-i18n="navSettings">Pengaturan</span>
+            </button>
+        </footer>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 6. VIEW CALENDAR ACADEMIC -->
+    <!-- ========================================== -->
+    <div id="view-calendar" class="view-section min-h-screen hidden flex flex-col justify-between w-full max-w-full">
+        
+        <!-- Header Topbar inside Calendar view -->
+        <header class="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 transition-colors">
+            <div class="max-w-5xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
+                <button onclick="navigateTo('view-dashboard')" class="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i> <span data-i18n="backToHome">Kembali ke Beranda</span>
+                </button>
+                <h2 class="text-base font-extrabold text-slate-900 dark:text-white" data-i18n="calendarHeader">Kalender Akademik</h2>
+                <div class="w-8"></div> <!-- spacer -->
+            </div>
+        </header>
+
+        <!-- Main Body Calendar -->
+        <main class="max-w-5xl w-full mx-auto px-4 md:px-6 py-6 space-y-6 flex-1">
+            <!-- Simulated Calendar Weekly View Component -->
+            <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-4">
+                <div class="flex items-center justify-between">
+                    <h3 class="font-bold text-lg text-slate-900 dark:text-white" data-i18n="monthLabel">Juli 2026</h3>
+                    <div class="flex gap-2">
+                        <button class="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center text-xs"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button class="w-8 h-8 rounded-full border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 flex items-center justify-center text-xs"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <!-- Simulation Matrix Grid of Days -->
+                <div class="grid grid-cols-7 gap-2 text-center">
+                    <span class="text-xs font-bold text-slate-400">Min</span>
+                    <span class="text-xs font-bold text-slate-400">Sen</span>
+                    <span class="text-xs font-bold text-slate-400">Sel</span>
+                    <span class="text-xs font-bold text-slate-400">Rab</span>
+                    <span class="text-xs font-bold text-slate-400">Kam</span>
+                    <span class="text-xs font-bold text-slate-400">Jum</span>
+                    <span class="text-xs font-bold text-slate-400">Sab</span>
+
+                    <!-- Row 1 simulation days -->
+                    <span class="py-3 text-sm text-slate-300 rounded-xl">28</span>
+                    <span class="py-3 text-sm text-slate-300 rounded-xl">29</span>
+                    <span class="py-3 text-sm text-slate-300 rounded-xl">30</span>
+                    <span class="py-3 text-sm text-slate-900 dark:text-white font-semibold rounded-xl">1</span>
+                    <span class="py-3 text-sm text-slate-900 dark:text-white font-semibold rounded-xl">2</span>
+                    <span class="py-3 text-sm bg-indigo-600 text-white font-bold rounded-xl relative shadow-md">
+                        3
+                        <span class="absolute bottom-1.5 left-1/2 -translate-x-1/2 w-1.5 h-1.5 bg-amber-400 rounded-full animate-pulse-slow"></span>
+                    </span>
+                    <span class="py-3 text-sm text-slate-900 dark:text-white font-semibold rounded-xl">4</span>
+                </div>
+            </div>
+
+            <!-- List detail agenda of the selected date -->
+            <div class="space-y-4">
+                <h3 class="font-bold text-base text-slate-900 dark:text-white" data-i18n="agendaToday">Agenda Tanggal Ini</h3>
+                <div id="calendar-agendas" class="space-y-3">
+                    <!-- Dynamically loaded -->
+                </div>
+            </div>
+            
+            <div class="h-24"></div> <!-- Prevent bottom content overlap -->
+        </main>
+
+        <!-- Bottom Navigation Mobile (Fixed securely at the bottom edge) -->
+        <footer class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 transition-colors py-3 px-6 flex items-center justify-around text-slate-400 shadow-xl">
+            <button onclick="navigateTo('view-dashboard')" class="flex flex-col items-center gap-1 hover:text-indigo-600 focus:outline-none">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[9px] font-bold" data-i18n="navHome">Beranda</span>
+            </button>
+            <button onclick="navigateTo('view-calendar')" class="flex flex-col items-center gap-1 text-indigo-600 dark:text-indigo-400 focus:outline-none">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+                <span class="text-[9px] font-bold" data-i18n="navCalendar">Kalender</span>
+            </button>
+            <button onclick="navigateTo('view-profile')" class="flex flex-col items-center gap-1 hover:text-slate-600 focus:outline-none">
+                <i class="fa-solid fa-gear text-lg"></i>
+                <span class="text-[9px] font-bold" data-i18n="navSettings">Pengaturan</span>
+            </button>
+        </footer>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 7. VIEW PROFIL MAHASISWA & PENGATURAN -->
+    <!-- ========================================== -->
+    <div id="view-profile" class="view-section min-h-screen hidden flex flex-col justify-between w-full max-w-full">
+        <!-- Header Topbar in Profile view -->
+        <header class="w-full bg-white/80 dark:bg-slate-900/80 backdrop-blur-md sticky top-0 z-30 border-b border-slate-200 dark:border-slate-800 transition-colors">
+            <div class="max-w-5xl mx-auto px-4 md:px-6 h-20 flex items-center justify-between">
+                <button onclick="navigateTo('view-dashboard')" class="flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+                    <i class="fa-solid fa-arrow-left"></i> <span data-i18n="backToHome">Kembali ke Beranda</span>
+                </button>
+                <h2 class="text-base font-extrabold text-slate-900 dark:text-white" data-i18n="profileHeader">Pengaturan Profil</h2>
+                <div class="w-8"></div> <!-- spacer -->
+            </div>
+        </header>
+
+        <!-- Core Profile Area -->
+        <main class="max-w-5xl w-full mx-auto px-4 md:px-6 py-6 flex flex-col md:flex-row gap-8 flex-1">
+            
+            <!-- Left Column: Identity card banner -->
+            <div class="w-full md:w-1/2 space-y-6">
+                <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/80 shadow-sm flex flex-col items-center text-center space-y-4">
+                    <!-- Avatar image placeholder -->
+                    <div class="relative group">
+                        <img id="avatar-img-profile" src="https://ui-avatars.com/api/?name=Vierdha+Jastien&background=4f46e5&color=fff&size=250" alt="Profile avatar" class="w-28 h-28 rounded-full border-4 border-slate-100 dark:border-slate-700 shadow-xl object-cover">
+                        <!-- Upload Sim Trigger Button -->
+                        <button onclick="triggerAvatarUploadSim()" class="absolute bottom-0 right-1 w-9 h-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-slate-800 transition-all scale-95 group-hover:scale-105">
+                            <i class="fa-solid fa-camera text-xs"></i>
+                        </button>
+                    </div>
+
+                    <!-- Biodata Text blocks -->
+                    <div>
+                        <h3 id="profile-name" class="font-extrabold text-xl text-slate-900 dark:text-white">Vierdha Jastien Prihandha</h3>
+                        <p class="text-sm text-slate-400 mt-0.5">NIM: <span id="profile-nim">1124160057</span></p>
+                        <span class="inline-block bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 text-xs font-bold py-1 px-3.5 rounded-full mt-3 border border-emerald-500/20" data-i18n="activeStudent">Mahasiswa Aktif</span>
+                    </div>
+
+                    <!-- Academic Info Lists -->
+                    <div class="w-full text-left text-xs space-y-2.5 pt-4 border-t border-slate-100 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                        <p class="flex justify-between"><span data-i18n="lblProgram">Program Studi:</span> <strong id="profile-prog-val" class="text-slate-700 dark:text-slate-200">Teknik Informatika</strong></p>
+                        <p class="flex justify-between"><span data-i18n="lblFaculty">Fakultas:</span> <strong id="profile-fac-val" class="text-slate-700 dark:text-slate-200">Teknologi Informasi & Komunikasi</strong></p>
+                        <p class="flex justify-between"><span data-i18n="lblUniv">Perguruan Tinggi:</span> <strong id="profile-univ-val" class="text-slate-700 dark:text-slate-200">ITB Bina Sarana Global</strong></p>
+                        <p class="flex justify-between"><span data-i18n="lblSemester">Semester:</span> <strong id="profile-sem-val" class="text-slate-700 dark:text-slate-200">Semester Genap (Aktif)</strong></p>
+                    </div>
+
+                    <!-- Open Bio Edit Modal -->
+                    <button onclick="openEditBioModal()" class="w-full py-2.5 bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 rounded-xl text-xs font-bold transition-all text-slate-700 dark:text-white flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-pen-to-square"></i> <span data-i18n="btnEditBio">Ubah Informasi Akademik</span>
+                    </button>
+                </div>
+
+                <!-- Academic grid counts -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="p-5 rounded-2xl bg-indigo-50/50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900/40 text-center space-y-1">
+                        <span class="block text-3xl font-black text-indigo-600 dark:text-indigo-400">22</span>
+                        <span class="text-xs font-semibold text-slate-400 block" data-i18n="statsSks">SKS Terdaftar</span>
+                    </div>
+                    <div class="p-5 rounded-2xl bg-amber-50/40 dark:bg-amber-950/10 border border-amber-100/40 dark:border-amber-900/20 text-center space-y-1">
+                        <span class="block text-3xl font-black text-amber-500">8</span>
+                        <span class="text-xs font-semibold text-slate-400 block" data-i18n="statsCourses">Mata Kuliah Aktif</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Settings & App Customizer -->
+            <div class="w-full md:w-1/2 space-y-6">
+                <!-- App custom settings panel -->
+                <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-5">
+                    <h3 class="font-extrabold text-base text-slate-900 dark:text-white" data-i18n="appPreferences">Preferensi Aplikasi</h3>
+
+                    <!-- Toggle dark mode -->
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <h4 class="font-bold text-sm text-slate-900 dark:text-white" data-i18n="settingDark">Mode Gelap (Dark Mode)</h4>
+                            <p class="text-[11px] text-slate-400" data-i18n="settingDarkSub">Penghemat baterai & ramah di mata malam hari</p>
+                        </div>
+                        <button onclick="toggleDarkMode()" id="settings-darkmode-switch" class="w-12 h-7 rounded-full bg-slate-200 dark:bg-indigo-600 p-1 flex items-center transition-colors relative">
+                            <span class="w-5 h-5 rounded-full bg-white transition-all transform translate-x-0 dark:translate-x-5 shadow-sm"></span>
+                        </button>
+                    </div>
+
+                    <!-- Simulate File Access Switch -->
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <h4 class="font-bold text-sm text-slate-900 dark:text-white">Izin Akses File HP</h4>
+                            <p class="text-[11px] text-slate-400">Berikan otorisasi untuk mengganti foto profil pribadi</p>
+                        </div>
+                        <button onclick="toggleFileAccessPermission()" id="settings-fileaccess-switch" class="w-12 h-7 rounded-full bg-slate-200 dark:bg-indigo-600 p-1 flex items-center transition-colors relative">
+                            <span class="w-5 h-5 rounded-full bg-white transition-all transform translate-x-0 dark:translate-x-5 shadow-sm"></span>
+                        </button>
+                    </div>
+
+                    <!-- Toggle custom notification alarm -->
+                    <div class="flex items-center justify-between">
+                        <div class="space-y-0.5">
+                            <h4 class="font-bold text-sm text-slate-900 dark:text-white" data-i18n="settingNotif">Pusat Notifikasi Aplikasi</h4>
+                            <p class="text-[11px] text-slate-400" data-i18n="settingNotifSub">Alarm otomatis 15 menit sebelum perkuliahan</p>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <button id="settings-alarm-edit-btn" onclick="openAlarmSettingsModal()" class="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 flex items-center justify-center hover:scale-105 transition-all text-sm hidden">
+                                <i class="fa-solid fa-pen text-[10px]"></i>
+                            </button>
+                            <button onclick="toggleNotificationSetting()" id="settings-notif-switch" class="w-12 h-7 rounded-full bg-slate-200 dark:bg-indigo-600 p-1 flex items-center transition-colors relative">
+                                <span class="w-5 h-5 rounded-full bg-white transition-all transform translate-x-0 dark:translate-x-5 shadow-sm"></span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Multi-Language Switch (ID & EN) -->
+                    <div class="flex items-center justify-between pt-2 border-t border-slate-100 dark:border-slate-700">
+                        <div class="space-y-0.5">
+                            <h4 class="font-bold text-sm text-slate-900 dark:text-white" data-i18n="settingLang">Bahasa Aplikasi / Language</h4>
+                            <p class="text-[11px] text-slate-400" data-i18n="settingLangSub">Ubah bahasa antarmuka ClassIn</p>
+                        </div>
+                        <div class="flex bg-slate-100 dark:bg-slate-900 p-1 rounded-xl border border-slate-200/50 dark:border-slate-700/50">
+                            <button id="lang-id-btn" onclick="switchLanguage('id')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all bg-indigo-600 text-white shadow-sm">ID</button>
+                            <button id="lang-en-btn" onclick="switchLanguage('en')" class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all text-slate-500">EN</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Integration setup cards -->
+                <div class="p-6 rounded-3xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-800/80 shadow-sm space-y-4">
+                    <h3 class="font-extrabold text-base text-slate-900 dark:text-white" data-i18n="calIntegration">Integrasi Kalender</h3>
+                    
+                    <button onclick="triggerCalendarSync(this)" class="w-full py-3.5 px-5 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 hover:bg-indigo-100/60 dark:hover:bg-indigo-900/40 border border-indigo-100/80 dark:border-indigo-900/50 text-indigo-700 dark:text-indigo-400 font-extrabold text-xs transition-all flex items-center justify-between">
+                        <span class="flex items-center gap-2"><i class="fa-solid fa-arrows-spin"></i> <span data-i18n="btnSyncCal">Sinkronisasi Google Calendar</span></span>
+                        <span id="sync-status-badge" class="text-[10px] bg-slate-200 dark:bg-slate-700 font-bold px-2.5 py-1 rounded-md text-slate-500 dark:text-slate-400" data-i18n="notConnected">Belum Terhubung</span>
+                    </button>
+                </div>
+
+                <!-- Danger zone action buttons -->
+                <button onclick="openLogoutModal()" class="w-full bg-red-50 hover:bg-red-100 dark:bg-red-950/20 text-red-600 font-bold py-4 rounded-2xl transition-all flex items-center justify-center gap-2 border border-red-200 dark:border-red-900/40 text-sm">
+                    <i class="fa-solid fa-right-from-bracket"></i> <span data-i18n="btnLogout">Keluar Dari Akun</span>
+                </button>
+            </div>
+            
+            <div class="h-24"></div> <!-- Prevent bottom content overlap -->
+        </main>
+
+        <!-- Bottom Navigation Mobile (Fixed securely at the bottom edge) -->
+        <footer class="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 transition-colors py-3 px-6 flex items-center justify-around text-slate-400 shadow-xl">
+            <button onclick="navigateTo('view-dashboard')" class="flex flex-col items-center gap-1 hover:text-indigo-600 focus:outline-none">
+                <i class="fa-solid fa-house text-lg"></i>
+                <span class="text-[9px] font-bold" data-i18n="navHome">Beranda</span>
+            </button>
+            <button onclick="navigateTo('view-calendar')" class="flex flex-col items-center gap-1 hover:text-slate-600 focus:outline-none">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+                <span class="text-[9px] font-bold" data-i18n="navCalendar">Kalender</span>
+            </button>
+            <button onclick="navigateTo('view-profile')" class="flex flex-col items-center gap-1 text-indigo-600 dark:text-indigo-400 focus:outline-none">
+                <i class="fa-solid fa-gear text-lg"></i>
+                <span class="text-[9px] font-bold" data-i18n="navSettings">Pengaturan</span>
+            </button>
+        </footer>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- 8. GLASSMORPHISM MODAL POPUPS & DIALOGS -->
+    <!-- ========================================== -->
+    
+    <!-- 1. Terms & Conditions Modal (Glassmorphism) -->
+    <div id="modal-terms" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20 animate-fade-in text-slate-900 dark:text-white">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-4">
+                <h3 class="font-extrabold text-lg flex items-center gap-2"><i class="fa-solid fa-shield-halved text-indigo-500"></i> Syarat & Ketentuan</h3>
+                <button onclick="closeTermsModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="max-h-[300px] overflow-y-auto text-xs space-y-3 pr-2 leading-relaxed text-slate-600 dark:text-slate-300">
+                <p><strong>1. Ketentuan Penggunaan Layanan</strong><br>Aplikasi ClassIn dirancang sebagai alat bantu pengingat jadwal perkuliahan, petunjuk arah ruang kelas kampus, dan integrasi pembelajaran digital mahasiswa secara efisien.</p>
+                <p><strong>2. Privasi Data Pengguna</strong><br>Seluruh data akademik, NIM, program studi, and biodata dienkripsi secara lokal di perangkat Anda. Sistem simulasi kami tidak menyebarkan kredensial kepada pihak ketiga tanpa persetujuan.</p>
+                <p><strong>3. Kepatuhan Akademik</strong><br>Mahasiswa bertanggung jawab penuh untuk mencocokkan jadwal kuliah di ClassIn dengan kalender akademik resmi yang dirilis oleh pihak perguruan tinggi kampus masing-masing.</p>
+            </div>
+            <button onclick="closeTermsModal()" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl text-sm transition-colors shadow-lg">Saya Setuju & Mengerti</button>
+        </div>
+    </div>
+
+    <!-- 2. Modal CRUD (Create / Edit Schedule - Glassmorphism) -->
+    <div id="modal-crud" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-lg rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20 animate-fade-in relative overflow-y-auto max-h-[90vh] text-slate-900 dark:text-white">
+            <div class="flex items-center justify-between pb-4 border-b border-white/10 mb-6">
+                <h3 id="crud-modal-title" class="font-extrabold text-lg">Tambah Jadwal Baru</h3>
+                <button onclick="closeCrudModal()" class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <form id="crud-form" onsubmit="handleCrudSubmit(event)" class="space-y-4">
+                <input type="hidden" id="crud-id">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblCourse">Nama Mata Kuliah</label>
+                    <input required type="text" id="crud-title" placeholder="Pemrograman Web SPA" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblSksCount">Jumlah SKS</label>
+                        <input required type="number" id="crud-sks" min="1" max="6" placeholder="3" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblDayName">Hari Kuliah</label>
+                        <select required id="crud-day" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                            <option value="Senin" class="dark:bg-slate-900">Senin</option>
+                            <option value="Selasa" class="dark:bg-slate-900">Selasa</option>
+                            <option value="Rabu" class="dark:bg-slate-900">Rabu</option>
+                            <option value="Kamis" class="dark:bg-slate-900">Kamis</option>
+                            <option value="Jumat" class="dark:bg-slate-900">Jumat</option>
+                            <option value="Sabtu" class="dark:bg-slate-900">Sabtu</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblLecturerName">Nama Dosen Pengampu</label>
+                    <input required type="text" id="crud-dosen" placeholder="Bpk. Ian, M.Kom" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblTimeStart">Jam Mulai</label>
+                        <input required type="time" id="crud-starttime" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblTimeEnd">Jam Selesai</label>
+                        <input required type="time" id="crud-endtime" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblClassFormat">Format Tatap Muka</label>
+                    <div class="grid grid-cols-2 gap-3 mt-1.5">
+                        <label class="flex items-center gap-2 p-3.5 bg-white/5 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 cursor-pointer text-xs font-semibold">
+                            <input type="radio" name="crud-type" value="offline" checked onchange="toggleCrudLocationField(this.value)" class="accent-indigo-600">
+                            Offline (Luring)
+                        </label>
+                        <label class="flex items-center gap-2 p-3.5 bg-white/5 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800 cursor-pointer text-xs font-semibold">
+                            <input type="radio" name="crud-type" value="online" onchange="toggleCrudLocationField(this.value)" class="accent-indigo-600">
+                            Online (Daring)
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Dynamic Location or URL Field -->
+                <div id="crud-location-wrapper">
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5">Lokasi Kelas / Detail Ruangan</label>
+                    <input required type="text" id="crud-location" placeholder="Gedung A, Ruang 301" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+
+                <div class="flex gap-4 pt-4 border-t border-white/10">
+                    <button type="button" onclick="closeCrudModal()" class="flex-1 bg-white/10 hover:bg-white/20 text-slate-700 dark:text-slate-300 font-bold py-3 px-6 rounded-xl transition-colors text-sm" data-i18n="btnCancel">
+                        Batal
+                    </button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-xl transition-colors shadow-lg shadow-indigo-600/10 text-sm" data-i18n="btnSave">
+                        Simpan Jadwal
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 3. Modal Empty Room Check Simulator (Glassmorphism) -->
+    <div id="modal-empty-rooms" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20 animate-fade-in space-y-4 text-slate-900 dark:text-white">
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 class="font-extrabold text-base flex items-center gap-2"><i class="fa-solid fa-building-circle-check text-amber-500"></i> Audit Ruangan Kosong</h3>
+                <button onclick="closeEmptyRoomModal()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <p class="text-xs text-slate-500 dark:text-slate-300 leading-relaxed" data-i18n="emptyRoomDesc">Ditemukan ruangan yang sedang tidak digunakan untuk kelas saat ini. Dapat Anda pakai untuk belajar mandiri atau diskusi tugas:</p>
+            
+            <!-- Diisi otomatis secara real-time oleh renderEmptyRoomsList() di script.js -->
+            <div id="empty-rooms-list" class="space-y-2.5"></div>
+            
+            <button onclick="closeEmptyRoomModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors text-xs mt-2" data-i18n="btnCloseAudit">
+                Tutup Jendela Audit
+            </button>
+        </div>
+    </div>
+
+    <!-- 3b. Modal Booking Room (Glassmorphism) -->
+    <div id="modal-booking-form" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20 animate-fade-in space-y-4 text-slate-900 dark:text-white">
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 class="font-extrabold text-base flex items-center gap-2"><i class="fa-solid fa-file-signature text-amber-500"></i> Form Peminjaman</h3>
+                <button onclick="closeBookingFormModal()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="booking-form" onsubmit="handleBookingSubmit(event)" class="space-y-4 text-left">
+                <input type="hidden" id="booking-room-name">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5">Email Siswa</label>
+                    <input required type="email" id="booking-email" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5">Kelas</label>
+                    <input required type="text" id="booking-kelas" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5">NIM</label>
+                    <input required type="text" id="booking-nim" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5">Waktu Pemakaian</label>
+                    <select required id="booking-waktu" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                        <option value="Pagi" class="dark:bg-slate-900">Pagi</option>
+                        <option value="Siang" class="dark:bg-slate-900">Siang</option>
+                        <option value="Sore/Malam" class="dark:bg-slate-900">Sore/Malam</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5">Alasan Peminjaman</label>
+                    <textarea required id="booking-alasan" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm h-20"></textarea>
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition-colors text-xs mt-2 shadow-lg shadow-indigo-600/10">Submit Peminjaman</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- 4. Modal Edit Biodata Akademik (Glassmorphism) -->
+    <div id="modal-edit-bio" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20 animate-fade-in space-y-4 text-slate-900 dark:text-white">
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 class="font-extrabold text-base" data-i18n="btnEditBio">Ubah Informasi Akademik</h3>
+                <button onclick="closeEditBioModal()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="edit-bio-form" onsubmit="handleEditBioSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblProgram">Program Studi</label>
+                    <input required type="text" id="edit-bio-prog" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblFaculty">Fakultas</label>
+                    <input required type="text" id="edit-bio-fac" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblUniv">Perguruan Tinggi</label>
+                    <input required type="text" id="edit-bio-univ" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5" data-i18n="lblSemester">Semester</label>
+                    <input required type="text" id="edit-bio-sem" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeEditBioModal()" class="flex-1 bg-white/10 hover:bg-white/20 text-slate-700 dark:text-slate-300 font-bold py-3 px-5 rounded-xl text-xs transition-all" data-i18n="btnCancel">Batal</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-xl text-xs transition-all shadow-lg" data-i18n="btnSave">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 5. Modal Edit Alarm Configuration (Glassmorphism) -->
+    <div id="modal-alarm" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-md rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20 animate-fade-in space-y-4 text-slate-900 dark:text-white">
+            <div class="flex items-center justify-between pb-3 border-b border-white/10">
+                <h3 class="font-extrabold text-base flex items-center gap-2"><i class="fa-solid fa-clock text-indigo-500"></i> Pengaturan Alarm</h3>
+                <button onclick="closeAlarmSettingsModal()" class="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center transition-colors"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <form id="alarm-form" onsubmit="handleAlarmSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5">Pilih Tanggal Pengingat</label>
+                    <input required type="date" id="alarm-date-input" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5">Waktu Alarm</label>
+                    <input required type="time" id="alarm-time-input" class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-400 dark:text-slate-300 uppercase tracking-wider mb-1.5">Catatan Pengingat</label>
+                    <input type="text" id="alarm-note-input" placeholder="Siapkan berkas praktikum..." class="w-full bg-white/10 dark:bg-slate-950/50 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 text-slate-950 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500 transition-all text-sm">
+                </div>
+                <div class="flex gap-3 pt-2">
+                    <button type="button" onclick="closeAlarmSettingsModal()" class="flex-1 bg-white/10 hover:bg-white/20 text-slate-700 dark:text-slate-300 font-bold py-3 px-5 rounded-xl text-xs transition-all" data-i18n="btnCancel">Batal</button>
+                    <button type="submit" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-5 rounded-xl text-xs transition-all shadow-lg">Simpan Pengisian Alarm</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- 6. Modal Logout Confirmation (Glassmorphism) -->
+    <div id="modal-logout" class="fixed inset-0 bg-slate-950/60 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-modal w-full max-w-sm rounded-3xl p-6 sm:p-8 shadow-2xl border border-white/20 animate-fade-in text-center space-y-4 text-slate-900 dark:text-white">
+            <div class="w-16 h-16 bg-red-500/10 text-red-500 rounded-2xl flex items-center justify-center mx-auto text-2xl">
+                <i class="fa-solid fa-triangle-exclamation animate-bounce-slow"></i>
+            </div>
+            <div>
+                <h3 class="font-extrabold text-lg" data-i18n="logoutConfirmTitle">Yakin Ingin Keluar?</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-300 mt-1" data-i18n="logoutConfirmDesc">Anda harus login kembali menggunakan akun simulasi untuk mengakses data jadwal perkuliahan.</p>
+            </div>
+            <div class="flex gap-3 pt-2">
+                <button onclick="closeLogoutModal()" class="flex-1 py-3 px-5 rounded-xl bg-white/10 hover:bg-white/20 text-slate-600 dark:text-slate-300 font-bold text-xs transition-all" data-i18n="btnLogoutCancel">Tidak, Tetap Masuk</button>
+                <button onclick="confirmLogoutAction()" class="flex-1 py-3 px-5 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs transition-all" data-i18n="btnLogoutConfirm">Ya, Keluar Akun</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- JAVASCRIPT SYSTEM ENGINE -->
+    <!-- ========================================== -->
+    <!-- Custom Application Script (ES Module) -->
+    <script type="module" src="script.js"></script>
+</body>
+</html>
